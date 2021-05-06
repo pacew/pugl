@@ -28,7 +28,8 @@ puglStrerror(const PuglStatus status)
   case PUGL_REALIZE_FAILED:        return "View creation failed";
   case PUGL_SET_FORMAT_FAILED:     return "Failed to set pixel format";
   case PUGL_CREATE_CONTEXT_FAILED: return "Failed to create drawing context";
-  case PUGL_UNSUPPORTED:      return "Unsupported operation";
+  case PUGL_UNSUPPORTED:           return "Unsupported operation";
+  case PUGL_NO_MEMORY:             return "Failed to allocate memory";
   }
   // clang-format on
 
@@ -46,18 +47,28 @@ puglSetString(char** dest, const char* string)
   }
 }
 
-void
+PuglStatus
 puglSetBlob(PuglBlob* const dest, const void* const data, const size_t len)
 {
   if (data) {
+    void* const newData = realloc(dest->data, len + 1);
+    if (!newData) {
+      free(dest->data);
+      dest->len = 0;
+      return PUGL_NO_MEMORY;
+    }
+
+    memcpy(newData, data, len);
+    ((char*)newData)[len] = 0;
+
     dest->len  = len;
-    dest->data = realloc(dest->data, len + 1);
-    memcpy(dest->data, data, len);
-    ((char*)dest->data)[len] = 0;
+    dest->data = newData;
   } else {
     dest->len  = 0;
     dest->data = NULL;
   }
+
+  return PUGL_SUCCESS;
 }
 
 static void
@@ -78,6 +89,7 @@ puglSetDefaultHints(PuglHints hints)
   hints[PUGL_RESIZABLE]             = PUGL_FALSE;
   hints[PUGL_IGNORE_KEY_REPEAT]     = PUGL_FALSE;
   hints[PUGL_REFRESH_RATE]          = PUGL_DONT_CARE;
+  hints[PUGL_ACCEPT_DROP]           = PUGL_DONT_CARE;
 }
 
 PuglWorld*
@@ -134,7 +146,7 @@ PuglView*
 puglNewView(PuglWorld* const world)
 {
   PuglView* view = (PuglView*)calloc(1, sizeof(PuglView));
-  if (!view || !(view->impl = puglInitViewInternals())) {
+  if (!view || !(view->impl = puglInitViewInternals(world))) {
     free(view);
     return NULL;
   }
@@ -179,7 +191,6 @@ puglFreeView(PuglView* view)
   }
 
   free(view->title);
-  free(view->clipboard.data);
   puglFreeViewInternals(view);
   free(view);
 }
@@ -464,34 +475,4 @@ puglDispatchEvent(PuglView* view, const PuglEvent* event)
   }
 
   return st0 ? st0 : st1;
-}
-
-const void*
-puglGetInternalClipboard(const PuglView* const view,
-                         const char** const    type,
-                         size_t* const         len)
-{
-  if (len) {
-    *len = view->clipboard.len;
-  }
-
-  if (type) {
-    *type = "text/plain";
-  }
-
-  return view->clipboard.data;
-}
-
-PuglStatus
-puglSetInternalClipboard(PuglView* const   view,
-                         const char* const type,
-                         const void* const data,
-                         const size_t      len)
-{
-  if (type && !!strcmp(type, "text/plain")) {
-    return PUGL_UNSUPPORTED;
-  }
-
-  puglSetBlob(&view->clipboard, data, len);
-  return PUGL_SUCCESS;
 }

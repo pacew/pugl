@@ -24,6 +24,9 @@ struct PuglInternalsImpl {
   HWND         hwnd;
   HCURSOR      cursor;
   HDC          hdc;
+  PuglBlob     clipboard;
+  char*        droppedUris;
+  size_t       droppedUrisLen;
   PuglSurface* surface;
   bool         flashing;
   bool         mouseTracked;

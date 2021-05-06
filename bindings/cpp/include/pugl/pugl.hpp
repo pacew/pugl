@@ -1,4 +1,4 @@
-// Copyright 2012-2020 David Robillard <d@drobilla.net>
+// Copyright 2012-2022 David Robillard <d@drobilla.net>
 // SPDX-License-Identifier: ISC
 
 #ifndef PUGL_PUGL_HPP
@@ -6,6 +6,7 @@
 
 #include "pugl/pugl.h"
 
+#include <cstddef>
 #include <cstdint> // IWYU pragma: keep
 
 #if defined(PUGL_HPP_THROW_FAILED_CONSTRUCTION)
@@ -106,6 +107,8 @@ using EventType    = PuglEventType;    ///< @copydoc PuglEventType
 using EventFlag    = PuglEventFlag;    ///< @copydoc PuglEventFlag
 using EventFlags   = PuglEventFlags;   ///< @copydoc PuglEventFlags
 using CrossingMode = PuglCrossingMode; ///< @copydoc PuglCrossingMode
+using Clipboard    = PuglClipboard;    ///< @copydoc PuglClipboard
+using Action       = PuglAction;       ///< @copydoc PuglAction
 
 /// @copydoc PuglCreateEvent
 using CreateEvent = Event<PUGL_CREATE, PuglCreateEvent>;
@@ -175,6 +178,12 @@ using LoopEnterEvent = Event<PUGL_LOOP_ENTER, PuglLoopEnterEvent>;
 
 /// @copydoc PuglLoopLeaveEvent
 using LoopLeaveEvent = Event<PUGL_LOOP_LEAVE, PuglLoopLeaveEvent>;
+
+/// @copydoc PuglDataOfferEvent
+using DataOfferEvent = Event<PUGL_DATA_OFFER, PuglDataOfferEvent>;
+
+/// @copydoc PuglDataEvent
+using DataEvent = Event<PUGL_DATA, PuglDataEvent>;
 
 /**
    @}
@@ -560,6 +569,77 @@ public:
       puglSetCursor(cobj(), static_cast<PuglCursor>(cursor)));
   }
 
+  /// @copydoc puglRegisterDragType
+  Status registerDragType(const char* const type)
+  {
+    return static_cast<Status>(puglRegisterDragType(cobj(), type));
+  }
+
+  /// @copydoc puglGetNumClipboardTypes
+  size_t numClipboardTypes(const Clipboard clipboard) const
+  {
+    return puglGetNumClipboardTypes(cobj(), clipboard);
+  }
+
+  /// @copydoc puglGetClipboardType
+  const char* clipboardType(const Clipboard clipboard,
+                            const size_t    typeIndex) const
+  {
+    return puglGetClipboardType(cobj(), clipboard, typeIndex);
+  }
+
+  /**
+     Accept data offered from a clipboard.
+
+     To accept a drop, this must be called while handling a #PUGL_DATA_OFFER
+     event.  Doing so will request the data from the source as the specified
+     type.  When the data is available, a #PUGL_DATA event will be sent to the
+     view which can then retrieve the data with puglGetClipboard().
+
+     @param offer The data offer event.
+
+     @param typeIndex The index of the type that the view will accept.  This is
+     the `typeIndex` argument to the call of puglGetClipboardType() that
+     returned the accepted type.
+
+     @param action The action that will be performed when the data is dropped.
+     This may be used to provide visual feedback to the user, for example by
+     having the drag source change the cursor.
+
+     @param region The region of the view that will accept this drop.  This may
+     be used by the system to avoid sending redundant events when the item is
+     dragged within the region.  This is only an optimization, an all-zero
+     region can safely be passed.
+  */
+  Status acceptOffer(const DataOfferEvent& offer,
+                     const size_t          typeIndex,
+                     const Action          action,
+                     const Rect&           region)
+  {
+    return static_cast<Status>(
+      puglAcceptOffer(cobj(), &offer, typeIndex, action, region));
+  }
+
+  /**
+     Reject data offered from a clipboard.
+
+     This can be called instead of puglAcceptOffer() to explicitly reject the
+     offer.  Note that drag-and-drop will still work if this isn't called, but
+     applications should always explicitly accept or reject each data offer for
+     optimal behaviour.
+
+     @param offer The data offer event.
+
+     @param region The region of the view that will refuse this drop.  This may
+     be used by the system to avoid sending redundant events when the item is
+     dragged within the region.  This is only an optimization, an all-zero
+     region can safely be passed.
+  */
+  Status rejectOffer(const DataOfferEvent& offer, const Rect& region)
+  {
+    return static_cast<Status>(puglRejectOffer(cobj(), &offer, region));
+  }
+
   /// @copydoc puglRequestAttention
   Status requestAttention() noexcept
   {
@@ -678,6 +758,10 @@ private:
       return target.onEvent(LoopEnterEvent{event->any});
     case PUGL_LOOP_LEAVE:
       return target.onEvent(LoopLeaveEvent{event->any});
+    case PUGL_DATA_OFFER:
+      return target.onEvent(DataOfferEvent{event->offer});
+    case PUGL_DATA:
+      return target.onEvent(DataEvent{event->data});
     }
 
     return Status::failure;

@@ -1,4 +1,4 @@
-// Copyright 2012-2020 David Robillard <d@drobilla.net>
+// Copyright 2012-2022 David Robillard <d@drobilla.net>
 // SPDX-License-Identifier: ISC
 
 #ifndef TEST_TEST_UTILS_H
@@ -170,6 +170,11 @@ printEvent(const PuglEvent* event, const char* prefix, const bool verbose)
     return PRINT("%sLoop enter\n", prefix);
   case PUGL_LOOP_LEAVE:
     return PRINT("%sLoop leave\n", prefix);
+  case PUGL_DATA_OFFER:
+    return PRINT(
+      "%sData offer at   " PFFMT "\n", prefix, event->offer.x, event->offer.y);
+  case PUGL_DATA:
+    return PRINT("%sData\n", prefix);
   default:
     break;
   }
@@ -250,6 +255,8 @@ puglViewHintString(const PuglViewHint hint)
     return "Ignore key repeat";
   case PUGL_REFRESH_RATE:
     return "Refresh rate";
+  case PUGL_ACCEPT_DROP:
+    return "Accept drop";
   case PUGL_NUM_VIEW_HINTS:
     break;
   }
