@@ -138,7 +138,7 @@ puglPrintFps(const PuglWorld* world,
    the amount of time pugl should process events before proceeding to render
    the frame.
 */
-double
+static inline double
 puglUpdateWaitTime(const double lastUpdateTime,
                    const double lastFrameEndTime,
                    const double currentTime,
