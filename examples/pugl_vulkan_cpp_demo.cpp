@@ -1345,6 +1345,7 @@ public:
   View(pugl::World& world, PuglVulkanDemo& app)
     : pugl::View{world}
     , _app{app}
+    , _lastUpdateTime{0.0}
   {
     setEventHandler(*this);
   }
@@ -1364,8 +1365,11 @@ public:
   pugl::Status onEvent(const pugl::KeyPressEvent& event);
   pugl::Status onEvent(const pugl::CloseEvent& event);
 
+  double lastUpdateTime() const { return _lastUpdateTime; }
+
 private:
   PuglVulkanDemo& _app;
+  double          _lastUpdateTime;
 };
 
 class PuglVulkanDemo
@@ -1472,6 +1476,8 @@ View::onEvent(const pugl::ConfigureEvent& event)
 pugl::Status
 View::onEvent(const pugl::UpdateEvent&)
 {
+  _lastUpdateTime = _app.world.time();
+
   return postRedisplay();
 }
 
@@ -1767,14 +1773,26 @@ run(const char* const      programPath,
                        app.renderer.rectPipeline,
                        app.rectData);
 
-  const int    refreshRate   = app.view.getHint(pugl::ViewHint::refreshRate);
-  const double frameDuration = 1.0 / static_cast<double>(refreshRate);
-  const double timeout       = app.opts.sync ? frameDuration : 0.0;
+  const int    refreshRate = app.view.getHint(pugl::ViewHint::refreshRate);
+  const double framePeriod = 1.0 / static_cast<double>(refreshRate);
 
   PuglFpsPrinter fpsPrinter = {app.world.time()};
   app.view.show();
+
+  double lastEndTime = app.world.time();
+
   while (!app.quit) {
+    const double updateStartTime = app.world.time();
+    const double lastUpdateTime  = app.view.lastUpdateTime();
+    const double timeout =
+      app.opts.sync
+        ? puglUpdateWaitTime(
+            lastUpdateTime, lastEndTime, updateStartTime, framePeriod)
+        : 0.0;
+
     app.world.update(timeout);
+    lastEndTime = app.world.time();
+
     puglPrintFps(app.world.cobj(), &fpsPrinter, &app.framesDrawn);
   }
 
