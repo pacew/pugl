@@ -408,7 +408,7 @@ main(int argc, char** argv)
 
   // Get refresh rate information so we can drive the loop tightly
   const int    refreshRate = puglGetViewHint(app.view, PUGL_REFRESH_RATE);
-  const double framePeriod = 1.0 / static_cast<double>(refreshRate);
+  const double framePeriod = 1.0 / (double)refreshRate;
 
   // Grind away, drawing continuously
   const double   startTime   = puglGetTime(app.world);
