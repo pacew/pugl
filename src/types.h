@@ -44,7 +44,7 @@ struct PuglViewImpl {
   PuglBlob           clipboard;
   PuglNativeView     parent;
   uintptr_t          transientParent;
-  PuglRect           frame;
+  PuglFrame          frame;
   PuglConfigureEvent lastConfigure;
   PuglHints          hints;
   PuglViewSize       sizeHints[(unsigned)PUGL_MAX_ASPECT + 1u];

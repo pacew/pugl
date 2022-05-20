@@ -72,6 +72,12 @@ nsPointFromPoints(PuglView* view, const NSPoint point)
 }
 
 static NSRect
+frameToNsRect(const PuglFrame frame)
+{
+  return NSMakeRect(frame.x, frame.y, frame.width, frame.height);
+}
+
+static NSRect
 rectToNsRect(const PuglRect rect)
 {
   return NSMakeRect(rect.x, rect.y, rect.width, rect.height);
@@ -97,10 +103,12 @@ updateViewRect(PuglView* view)
     const NSRect contentPx     = nsRectFromPoints(view, contentPt);
     const double screenHeight  = screenFramePx.size.height;
 
-    view->frame.x = contentPx.origin.x;
-    view->frame.y = screenHeight - contentPx.origin.y - contentPx.size.height;
-    view->frame.width  = contentPx.size.width;
-    view->frame.height = contentPx.size.height;
+    view->frame.x = (PuglCoord)contentPx.origin.x;
+    view->frame.y =
+      (PuglCoord)(screenHeight - contentPx.origin.y - contentPx.size.height);
+
+    view->frame.width  = (PuglSpan)contentPx.size.width;
+    view->frame.height = (PuglSpan)contentPx.size.height;
   }
 }
 
@@ -150,8 +158,8 @@ updateViewRect(PuglView* view)
       0,
       puglview->frame.x,
       puglview->frame.y,
-      puglview->frame.width,
-      puglview->frame.height,
+      (PuglSpan)puglview->frame.width,
+      (PuglSpan)puglview->frame.height,
     };
 
     PuglEvent configureEvent;
@@ -190,8 +198,8 @@ updateViewRect(PuglView* view)
       0,
       puglview->frame.x,
       puglview->frame.y,
-      puglview->frame.width,
-      puglview->frame.height,
+      (PuglSpan)puglview->frame.width,
+      (PuglSpan)puglview->frame.height,
     };
 
     PuglEvent configureEvent;
@@ -207,10 +215,10 @@ updateViewRect(PuglView* view)
   const PuglExposeEvent ev = {
     PUGL_EXPOSE,
     0,
-    rect.origin.x * scaleFactor,
-    rect.origin.y * scaleFactor,
-    rect.size.width * scaleFactor,
-    rect.size.height * scaleFactor,
+    (PuglOffset)(rect.origin.x * scaleFactor),
+    (PuglOffset)(rect.origin.y * scaleFactor),
+    (PuglSpan)(rect.size.width * scaleFactor),
+    (PuglSpan)(rect.size.height * scaleFactor),
   };
 
   PuglEvent exposeEvent;
@@ -350,15 +358,15 @@ handleCrossing(PuglWrapperView* view, NSEvent* event, const PuglEventType type)
   const NSPoint           wloc = [view eventLocation:event];
   const NSPoint           rloc = [NSEvent mouseLocation];
   const PuglCrossingEvent ev   = {
-    type,
-    0,
-    [event timestamp],
-    wloc.x,
-    wloc.y,
-    rloc.x,
-    [[NSScreen mainScreen] frame].size.height - rloc.y,
-    getModifiers(event),
-    PUGL_CROSSING_NORMAL,
+      type,
+      0,
+      [event timestamp],
+      wloc.x,
+      wloc.y,
+      rloc.x,
+      [[NSScreen mainScreen] frame].size.height - rloc.y,
+      getModifiers(event),
+      PUGL_CROSSING_NORMAL,
   };
 
   PuglEvent crossingEvent;
@@ -391,14 +399,14 @@ handleCrossing(PuglWrapperView* view, NSEvent* event, const PuglEventType type)
   const NSPoint         wloc = [self eventLocation:event];
   const NSPoint         rloc = [NSEvent mouseLocation];
   const PuglMotionEvent ev   = {
-    PUGL_MOTION,
-    0,
-    [event timestamp],
-    wloc.x,
-    wloc.y,
-    rloc.x,
-    [[NSScreen mainScreen] frame].size.height - rloc.y,
-    getModifiers(event),
+      PUGL_MOTION,
+      0,
+      [event timestamp],
+      wloc.x,
+      wloc.y,
+      rloc.x,
+      [[NSScreen mainScreen] frame].size.height - rloc.y,
+      getModifiers(event),
   };
 
   PuglEvent motionEvent;
@@ -426,15 +434,15 @@ handleCrossing(PuglWrapperView* view, NSEvent* event, const PuglEventType type)
   const NSPoint         wloc = [self eventLocation:event];
   const NSPoint         rloc = [NSEvent mouseLocation];
   const PuglButtonEvent ev   = {
-    PUGL_BUTTON_PRESS,
-    0,
-    [event timestamp],
-    wloc.x,
-    wloc.y,
-    rloc.x,
-    [[NSScreen mainScreen] frame].size.height - rloc.y,
-    getModifiers(event),
-    (uint32_t)[event buttonNumber],
+      PUGL_BUTTON_PRESS,
+      0,
+      [event timestamp],
+      wloc.x,
+      wloc.y,
+      rloc.x,
+      [[NSScreen mainScreen] frame].size.height - rloc.y,
+      getModifiers(event),
+      (uint32_t)[event buttonNumber],
   };
 
   PuglEvent pressEvent;
@@ -447,15 +455,15 @@ handleCrossing(PuglWrapperView* view, NSEvent* event, const PuglEventType type)
   const NSPoint         wloc = [self eventLocation:event];
   const NSPoint         rloc = [NSEvent mouseLocation];
   const PuglButtonEvent ev   = {
-    PUGL_BUTTON_RELEASE,
-    0,
-    [event timestamp],
-    wloc.x,
-    wloc.y,
-    rloc.x,
-    [[NSScreen mainScreen] frame].size.height - rloc.y,
-    getModifiers(event),
-    (uint32_t)[event buttonNumber],
+      PUGL_BUTTON_RELEASE,
+      0,
+      [event timestamp],
+      wloc.x,
+      wloc.y,
+      rloc.x,
+      [[NSScreen mainScreen] frame].size.height - rloc.y,
+      getModifiers(event),
+      (uint32_t)[event buttonNumber],
   };
 
   PuglEvent releaseEvent;
@@ -985,11 +993,12 @@ puglRealize(PuglView* view)
 
     view->frame.width  = defaultSize.width;
     view->frame.height = defaultSize.height;
-    view->frame.x      = screenWidthPx / 2.0 - view->frame.width / 2.0;
-    view->frame.y      = screenHeightPx / 2.0 - view->frame.height / 2.0;
+
+    view->frame.x = (PuglCoord)((screenWidthPx - view->frame.width) / 2.0);
+    view->frame.y = (PuglCoord)((screenHeightPx - view->frame.height) / 2.0);
   }
 
-  const NSRect framePx = rectToNsRect(view->frame);
+  const NSRect framePx = frameToNsRect(view->frame);
   const NSRect framePt = NSMakeRect(framePx.origin.x / scaleFactor,
                                     framePx.origin.y / scaleFactor,
                                     framePx.size.width / scaleFactor,
@@ -1363,14 +1372,14 @@ puglSetWindowTitle(PuglView* view, const char* title)
 }
 
 PuglStatus
-puglSetFrame(PuglView* view, const PuglRect frame)
+puglSetFrame(PuglView* view, const PuglFrame frame)
 {
   PuglInternals* const impl = view->impl;
 
   // Update view frame to exactly the requested frame in Pugl coordinates
   view->frame = frame;
 
-  const NSRect framePx = rectToNsRect(frame);
+  const NSRect framePx = frameToNsRect(frame);
   const NSRect framePt = nsRectToPoints(view, framePx);
   if (impl->window) {
     // Resize window to fit new content rect

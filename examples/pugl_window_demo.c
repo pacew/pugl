@@ -14,6 +14,7 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 typedef struct {
@@ -35,7 +36,7 @@ typedef struct {
   bool       verbose;
 } PuglTestApp;
 
-static const double pad = 64.0;
+static const uint8_t pad = 64u;
 
 static void
 onDisplay(PuglView* view)
@@ -63,32 +64,32 @@ onKeyPress(PuglView* view, const PuglKeyEvent* event)
 {
   PuglWorld*   world = puglGetWorld(view);
   PuglTestApp* app   = (PuglTestApp*)puglGetWorldHandle(world);
-  PuglRect     frame = puglGetFrame(view);
+  PuglFrame    frame = puglGetFrame(view);
 
   if (event->key == 'q' || event->key == PUGL_KEY_ESCAPE) {
     app->quit = 1;
   } else if (event->state & PUGL_MOD_SHIFT) {
     if (event->key == PUGL_KEY_UP) {
-      frame.height += 10;
+      frame.height = (PuglSpan)(frame.height + 10u);
     } else if (event->key == PUGL_KEY_DOWN) {
-      frame.height -= 10;
+      frame.height = (PuglSpan)(frame.height - 10u);
     } else if (event->key == PUGL_KEY_LEFT) {
-      frame.width -= 10;
+      frame.width = (PuglSpan)(frame.width - 10u);
     } else if (event->key == PUGL_KEY_RIGHT) {
-      frame.width += 10;
+      frame.width = (PuglSpan)(frame.width + 10u);
     } else {
       return;
     }
     puglSetFrame(view, frame);
   } else {
     if (event->key == PUGL_KEY_UP) {
-      frame.y -= 10;
+      frame.y = (PuglCoord)(frame.y - 10);
     } else if (event->key == PUGL_KEY_DOWN) {
-      frame.y += 10;
+      frame.y = (PuglCoord)(frame.y + 10);
     } else if (event->key == PUGL_KEY_LEFT) {
-      frame.x -= 10;
+      frame.x = (PuglCoord)(frame.x - 10);
     } else if (event->key == PUGL_KEY_RIGHT) {
-      frame.x += 10;
+      frame.x = (PuglCoord)(frame.x + 10);
     } else {
       return;
     }
@@ -185,10 +186,12 @@ main(int argc, char** argv)
 
   PuglStatus st = PUGL_SUCCESS;
   for (unsigned i = 0; i < 2; ++i) {
-    CubeView*      cube  = &app.cubes[i];
-    PuglView*      view  = cube->view;
-    const PuglRect frame = {
-      pad + (128.0 + pad) * i, pad + (128.0 + pad) * i, 512.0, 512.0};
+    CubeView*       cube  = &app.cubes[i];
+    PuglView*       view  = cube->view;
+    const PuglFrame frame = {(PuglCoord)(pad + (128.0 + pad) * i),
+                             (PuglCoord)(pad + (128.0 + pad) * i),
+                             512u,
+                             512u};
 
     cube->dist = 10;
 

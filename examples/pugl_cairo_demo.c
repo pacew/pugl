@@ -93,18 +93,18 @@ buttonDraw(PuglTestApp* app, cairo_t* cr, const Button* but, const double time)
 static void
 postButtonRedisplay(PuglView* view)
 {
-  const PuglRect frame  = puglGetFrame(view);
-  const double   width  = frame.width;
-  const double   height = frame.height;
-  const double   scaleX = (width - (512 / width)) / 512.0;
-  const double   scaleY = (height - (512 / height)) / 512.0;
+  const PuglFrame frame  = puglGetFrame(view);
+  const double    width  = frame.width;
+  const double    height = frame.height;
+  const double    scaleX = (width - (512.0 / width)) / 512.0;
+  const double    scaleY = (height - (512.0 / height)) / 512.0;
 
   for (const Button* b = buttons; b->label; ++b) {
     const double   span = sqrt(b->w * b->w + b->h * b->h);
-    const PuglRect rect = {(b->x - span) * scaleX,
-                           (b->y - span) * scaleY,
-                           span * 2.0 * scaleX,
-                           span * 2.0 * scaleY};
+    const PuglRect rect = {(PuglOffset)((b->x - span) * scaleX),
+                           (PuglOffset)((b->y - span) * scaleY),
+                           (PuglSpan)ceil(span * 2.0 * scaleX),
+                           (PuglSpan)ceil(span * 2.0 * scaleY)};
 
     puglPostRedisplayRect(view, rect);
   }
@@ -119,9 +119,9 @@ onDisplay(PuglTestApp* app, PuglView* view, const PuglExposeEvent* event)
   cairo_clip_preserve(cr);
 
   // Draw background
-  const PuglRect frame  = puglGetFrame(view);
-  const double   width  = frame.width;
-  const double   height = frame.height;
+  const PuglFrame frame  = puglGetFrame(view);
+  const double    width  = frame.width;
+  const double    height = frame.height;
   if (app->entered) {
     cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
   } else {

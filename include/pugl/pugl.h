@@ -60,24 +60,58 @@ PUGL_BEGIN_DECLS
 */
 
 /**
-   A span (width or height) in the size of a view.
+   A pixel coordinate in the position of a view.
 
-   There are platform-imposed limits on window sizes.  For portability,
-   applications should always specify spans between 1 and 10000.
+   This is relative to the top left corner of the view's parent, or for
+   top-level views, the top left corner of the screen.
+
+   There are platform-imposed limits on window positions.  For portability,
+   applications should always specify coordinates between -16000 and 16000.
+   Note that negative coordinates are possible (such as with multiple displays
+   on MacOS).
+*/
+typedef int16_t PuglCoord;
+
+/**
+   A pixel offset or coordinate within a view.
+
+   This is relative to the top left pixel of the view, which is (0, 0).
+*/
+typedef uint16_t PuglOffset;
+
+/**
+   A pixel span (width or height) within/of a view.
+
+   Due to platform limits, the span of a window in either dimension should be
+   between 1 and 10000.
 */
 typedef uint16_t PuglSpan;
 
 /**
-   A rectangle.
+   A frame rectangle, the parent-relative position and size of a view.
 
-   This is used to describe things like view position and size.  Pugl generally
-   uses coordinates where the top left corner is 0,0.
+   This is used for describing the position and size of a view, where the
+   coordinate (0, 0) represents the top-left pixel of the view's parent window,
+   or for top-level views, the top-left pixel of the main monitor.
 */
 typedef struct {
-  double x;
-  double y;
-  double width;
-  double height;
+  PuglCoord x;
+  PuglCoord y;
+  PuglSpan  width;
+  PuglSpan  height;
+} PuglFrame;
+
+/**
+   A rectangle within a view.
+
+   This is used for describing regions within a view, where the coordinate (0,
+   0) represents the top-left pixel of the view.
+*/
+typedef struct {
+  PuglOffset x;
+  PuglOffset y;
+  PuglSpan   width;
+  PuglSpan   height;
 } PuglRect;
 
 /**
@@ -267,10 +301,10 @@ typedef PuglAnyEvent PuglDestroyEvent;
 typedef struct {
   PuglEventType  type;   ///< #PUGL_CONFIGURE
   PuglEventFlags flags;  ///< Bitwise OR of #PuglEventFlag values
-  double         x;      ///< New parent-relative X coordinate
-  double         y;      ///< New parent-relative Y coordinate
-  double         width;  ///< New width
-  double         height; ///< New height
+  PuglCoord      x;      ///< New parent-relative X coordinate
+  PuglCoord      y;      ///< New parent-relative Y coordinate
+  PuglSpan       width;  ///< New width
+  PuglSpan       height; ///< New height
 } PuglConfigureEvent;
 
 /**
@@ -313,10 +347,10 @@ typedef PuglAnyEvent PuglUpdateEvent;
 typedef struct {
   PuglEventType  type;   ///< #PUGL_EXPOSE
   PuglEventFlags flags;  ///< Bitwise OR of #PuglEventFlag values
-  double         x;      ///< View-relative X coordinate
-  double         y;      ///< View-relative Y coordinate
-  double         width;  ///< Width of exposed region
-  double         height; ///< Height of exposed region
+  PuglOffset     x;      ///< View-relative X coordinate
+  PuglOffset     y;      ///< View-relative Y coordinate
+  PuglSpan       width;  ///< Width of exposed region
+  PuglSpan       height; ///< Height of exposed region
 } PuglExposeEvent;
 
 /**
@@ -969,7 +1003,7 @@ puglGetViewHint(const PuglView* view, PuglViewHint hint);
    The position is in screen coordinates with an upper left origin.
 */
 PUGL_API
-PuglRect
+PuglFrame
 puglGetFrame(const PuglView* view);
 
 /**
@@ -982,7 +1016,7 @@ puglGetFrame(const PuglView* view);
 */
 PUGL_API
 PuglStatus
-puglSetFrame(PuglView* view, PuglRect frame);
+puglSetFrame(PuglView* view, PuglFrame frame);
 
 /**
    Set a size hint for the view.
@@ -1449,10 +1483,10 @@ static inline PUGL_DEPRECATED_BY("puglSetFrame")
 void
 puglInitWindowSize(PuglView* view, int width, int height)
 {
-  PuglRect frame = puglGetFrame(view);
+  PuglFrame frame = puglGetFrame(view);
 
-  frame.width  = width;
-  frame.height = height;
+  frame.width  = (PuglSpan)width;
+  frame.height = (PuglSpan)height;
 
   puglSetFrame(view, frame);
 }
@@ -1536,7 +1570,7 @@ static inline PUGL_DEPRECATED_BY("puglGetFrame")
 void
 puglGetSize(PuglView* view, int* width, int* height)
 {
-  const PuglRect frame = puglGetFrame(view);
+  const PuglFrame frame = puglGetFrame(view);
 
   *width  = (int)frame.width;
   *height = (int)frame.height;

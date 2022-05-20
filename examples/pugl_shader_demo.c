@@ -89,11 +89,11 @@ onConfigure(PuglView* view, double width, double height)
 static void
 onExpose(PuglView* view)
 {
-  PuglTestApp*   app    = (PuglTestApp*)puglGetHandle(view);
-  const PuglRect frame  = puglGetFrame(view);
-  const float    width  = (float)frame.width;
-  const float    height = (float)frame.height;
-  const double   time   = puglGetTime(puglGetWorld(view));
+  PuglTestApp*    app    = (PuglTestApp*)puglGetHandle(view);
+  const PuglFrame frame  = puglGetFrame(view);
+  const float     width  = (float)frame.width;
+  const float     height = (float)frame.height;
+  const double    time   = puglGetTime(puglGetWorld(view));
 
   // Construct projection matrix for 2D window surface (in pixels)
   mat4 proj;

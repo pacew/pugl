@@ -65,7 +65,8 @@ private:
 
 } // namespace detail
 
-using Rect = PuglRect; ///< @copydoc PuglRect
+using Rect  = PuglRect;  ///< @copydoc PuglRect
+using Frame = PuglFrame; ///< @copydoc PuglFrame
 
 /**
    @defgroup eventspp Events
@@ -459,10 +460,10 @@ public:
   */
 
   /// @copydoc puglGetFrame
-  Rect frame() const noexcept { return puglGetFrame(cobj()); }
+  Frame frame() const noexcept { return puglGetFrame(cobj()); }
 
   /// @copydoc puglSetFrame
-  Status setFrame(const Rect& frame) noexcept
+  Status setFrame(const Frame& frame) noexcept
   {
     return static_cast<Status>(puglSetFrame(cobj(), frame));
   }

@@ -276,7 +276,7 @@ puglGetVisible(const PuglView* view)
   return view->visible;
 }
 
-PuglRect
+PuglFrame
 puglGetFrame(const PuglView* view)
 {
   return view->frame;

@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static const int       borderWidth    = 64;
+static const uint8_t   borderWidth    = 64u;
 static const uintptr_t reverseTimerId = 1u;
 
 typedef struct {
@@ -52,13 +52,14 @@ static const float backgroundColorVertices[] = {
 
 // clang-format on
 
-static PuglRect
-getChildFrame(const PuglRect parentFrame)
+static PuglFrame
+getChildFrame(const PuglFrame parentFrame)
 {
-  const PuglRect childFrame = {borderWidth,
-                               borderWidth,
-                               parentFrame.width - 2 * borderWidth,
-                               parentFrame.height - 2 * borderWidth};
+  const PuglFrame childFrame = {
+    borderWidth,
+    borderWidth,
+    (PuglSpan)(parentFrame.width - 2 * borderWidth),
+    (PuglSpan)(parentFrame.height - 2 * borderWidth)};
 
   return childFrame;
 }
@@ -102,7 +103,7 @@ static void
 onKeyPress(PuglView* view, const PuglKeyEvent* event, const char* prefix)
 {
   PuglTestApp* app   = (PuglTestApp*)puglGetHandle(view);
-  PuglRect     frame = puglGetFrame(view);
+  PuglFrame    frame = puglGetFrame(view);
 
   if (event->key == '\t') {
     swapFocus(app);
@@ -118,26 +119,26 @@ onKeyPress(PuglView* view, const PuglKeyEvent* event, const char* prefix)
     fprintf(stderr, "%sPaste \"%s\"\n", prefix, text);
   } else if (event->state & PUGL_MOD_SHIFT) {
     if (event->key == PUGL_KEY_UP) {
-      frame.height += 10;
+      frame.height = (PuglSpan)(frame.height + 10u);
     } else if (event->key == PUGL_KEY_DOWN) {
-      frame.height -= 10;
+      frame.height = (PuglSpan)(frame.height - 10u);
     } else if (event->key == PUGL_KEY_LEFT) {
-      frame.width -= 10;
+      frame.width = (PuglSpan)(frame.width - 10u);
     } else if (event->key == PUGL_KEY_RIGHT) {
-      frame.width += 10;
+      frame.width = (PuglSpan)(frame.width + 10u);
     } else {
       return;
     }
     puglSetFrame(view, frame);
   } else {
     if (event->key == PUGL_KEY_UP) {
-      frame.y -= 10;
+      frame.y = (PuglCoord)(frame.y - 10);
     } else if (event->key == PUGL_KEY_DOWN) {
-      frame.y += 10;
+      frame.y = (PuglCoord)(frame.y + 10);
     } else if (event->key == PUGL_KEY_LEFT) {
-      frame.x -= 10;
+      frame.x = (PuglCoord)(frame.x - 10);
     } else if (event->key == PUGL_KEY_RIGHT) {
-      frame.x += 10;
+      frame.x = (PuglCoord)(frame.x + 10);
     } else {
       return;
     }
@@ -148,8 +149,8 @@ onKeyPress(PuglView* view, const PuglKeyEvent* event, const char* prefix)
 static PuglStatus
 onParentEvent(PuglView* view, const PuglEvent* event)
 {
-  PuglTestApp*   app         = (PuglTestApp*)puglGetHandle(view);
-  const PuglRect parentFrame = puglGetFrame(view);
+  PuglTestApp*    app         = (PuglTestApp*)puglGetHandle(view);
+  const PuglFrame parentFrame = puglGetFrame(view);
 
   printEvent(event, "Parent: ", app->verbose);
 
@@ -276,7 +277,7 @@ main(int argc, char** argv)
 
   puglSetClassName(app.world, "PuglEmbedDemo");
 
-  const PuglRect parentFrame = {0, 0, 512, 512};
+  const PuglFrame parentFrame = {0, 0, 512, 512};
   puglSetSizeHint(app.parent, PUGL_DEFAULT_SIZE, 512, 512);
   puglSetSizeHint(app.parent, PUGL_MIN_SIZE, 192, 192);
   puglSetSizeHint(app.parent, PUGL_MAX_SIZE, 1024, 1024);

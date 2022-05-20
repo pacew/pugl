@@ -474,14 +474,14 @@ handleConfigure(PuglView* view, PuglEvent* event)
   const LONG width  = rect.right - rect.left;
   const LONG height = rect.bottom - rect.top;
 
-  view->frame.x = rect.left;
-  view->frame.y = rect.top;
+  view->frame.x = (PuglCoord)rect.left;
+  view->frame.y = (PuglCoord)rect.top;
 
   event->configure.type   = PUGL_CONFIGURE;
-  event->configure.x      = view->frame.x;
-  event->configure.y      = view->frame.y;
-  event->configure.width  = width;
-  event->configure.height = height;
+  event->configure.x      = (PuglCoord)view->frame.x;
+  event->configure.y      = (PuglCoord)view->frame.y;
+  event->configure.width  = (PuglSpan)width;
+  event->configure.height = (PuglSpan)height;
 
   return rect;
 }
@@ -630,10 +630,10 @@ handleMessage(PuglView* view, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_PAINT:
     GetUpdateRect(view->impl->hwnd, &rect, false);
     event.expose.type   = PUGL_EXPOSE;
-    event.expose.x      = rect.left;
-    event.expose.y      = rect.top;
-    event.expose.width  = rect.right - rect.left;
-    event.expose.height = rect.bottom - rect.top;
+    event.expose.x      = (PuglOffset)rect.left;
+    event.expose.y      = (PuglOffset)rect.top;
+    event.expose.width  = (PuglSpan)(rect.right - rect.left);
+    event.expose.height = (PuglSpan)(rect.bottom - rect.top);
     break;
   case WM_ERASEBKGND:
     return true;
@@ -977,7 +977,7 @@ puglSetWindowTitle(PuglView* view, const char* title)
 }
 
 PuglStatus
-puglSetFrame(PuglView* view, const PuglRect frame)
+puglSetFrame(PuglView* view, const PuglFrame frame)
 {
   if (view->impl->hwnd) {
     RECT rect = {(long)frame.x,
@@ -1192,8 +1192,9 @@ puglWinCreateWindow(PuglView* const   view,
 
     view->frame.width  = defaultSize.width;
     view->frame.height = defaultSize.height;
-    view->frame.x      = (screenWidth - view->frame.width) / 2.0;
-    view->frame.y      = (screenHeight - view->frame.height) / 2.0;
+
+    view->frame.x = (PuglCoord)((screenWidth - view->frame.width) / 2);
+    view->frame.y = (PuglCoord)((screenHeight - view->frame.height) / 2);
   }
 
   // The meaning of "parent" depends on the window type (WS_CHILD)
