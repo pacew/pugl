@@ -1001,11 +1001,15 @@ mergeExposeEvents(PuglExposeEvent* const dst, const PuglExposeEvent* const src)
   if (!dst->type) {
     *dst = *src;
   } else {
-    const double max_x = MAX(dst->x + dst->width, src->x + src->width);
-    const double max_y = MAX(dst->y + dst->height, src->y + src->height);
+    const int dst_r = dst->x + dst->width;
+    const int src_r = src->x + src->width;
+    const int max_x = MAX(dst_r, src_r);
+    const int dst_b = dst->y + dst->height;
+    const int src_b = src->y + src->height;
+    const int max_y = MAX(dst_b, src_b);
 
-    dst->x      = MIN(dst->x, src->x);
-    dst->y      = MIN(dst->y, src->y);
+    dst->x      = (PuglOffset)MIN(dst->x, src->x);
+    dst->y      = (PuglOffset)MIN(dst->y, src->y);
     dst->width  = (PuglSpan)(max_x - dst->x);
     dst->height = (PuglSpan)(max_y - dst->y);
   }
@@ -1353,6 +1357,41 @@ puglSetFrame(PuglView* const view, const PuglFrame frame)
   }
 
   view->frame = frame;
+  return PUGL_SUCCESS;
+}
+
+PuglStatus
+puglSetPosition(PuglView* const view, const int x, const int y)
+{
+  if (x > INT16_MAX || y > INT16_MAX) {
+    return PUGL_BAD_PARAMETER;
+  }
+
+  if (view->impl->win &&
+      !XMoveWindow(view->world->impl->display, view->impl->win, x, y)) {
+    return PUGL_UNKNOWN_ERROR;
+  }
+
+  view->frame.x = (PuglCoord)x;
+  view->frame.y = (PuglCoord)y;
+  return PUGL_SUCCESS;
+}
+
+PuglStatus
+puglSetSize(PuglView* const view, const unsigned width, const unsigned height)
+{
+  if (width > INT16_MAX || height > INT16_MAX) {
+    return PUGL_BAD_PARAMETER;
+  }
+
+  if (view->impl->win &&
+      !XResizeWindow(
+        view->world->impl->display, view->impl->win, width, height)) {
+    return PUGL_UNKNOWN_ERROR;
+  }
+
+  view->frame.width  = (PuglSpan)width;
+  view->frame.height = (PuglSpan)height;
   return PUGL_SUCCESS;
 }
 
